@@ -49,8 +49,9 @@ def http_bytes(url, timeout=25):
         return r.read()
 
 
-def norm(name):  # "Deaf Smith County" / "DEAF SMITH" / "DeafSmith" all compare equal
-    return re.sub(r"[^a-z]", "", re.sub(r"\s+county$", "", str(name).lower().strip()))
+def norm(name):  # "Deaf Smith County" / "DEAF SMITH" / "Saint Francis" / "St. Francis County" all compare equal
+    s = re.sub(r"\s+(county|parish)$", "", str(name).lower().strip())
+    return re.sub(r"[^a-z]", "", re.sub(r"\bsaint\b", "st", s))
 
 
 def ms(v):
@@ -278,6 +279,14 @@ ORDERS = [
          verify=dict(url="https://www.emnrd.nm.gov/sfd/find-current-fire-restrictions/",
                      must=[r"Statewide Fire Restrictions", r"remain in place until rescinded"],
                      must_not=[r"(has|have) been rescinded", r"were rescinded", r"restrictions (were|are|have been) lifted"])),
+    dict(id="wa-statewide-2026", state="WA", full="Washington", source="Washington Governor's proclamation", geom="Washington",
+         home="https://governor.wa.gov/news/2026/governor-ferguson-declares-statewide-wildfire-emergency-issues-statewide-burn-ban",
+         effective="2026-08-01", expires="2026-09-30", confirmed_on="2026-09-18", status="ban",
+         label="Statewide burn ban (Governor's order)", name="Washington (statewide)",
+         detail="Most outdoor and agricultural burning is prohibited statewide through September 30, 2026, including yard waste, trash, weeds and "
+                "bonfires. Campfires are allowed only in contained fire pits. Rules for specific places can be stricter.",
+         verify=dict(url="https://governor.wa.gov/news/2026/governor-ferguson-declares-statewide-wildfire-emergency-issues-statewide-burn-ban",
+                     must=[r"statewide prohibition on most outdoor and agricultural burning through September 30, 2026"], must_not=[])),
     dict(id="az-blm-2026", state="AZ", full="Arizona", source="BLM Arizona", geom=None,
          home="https://www.blm.gov/programs/public-safety-and-fire/fire/regional-info/arizona/fire-restrictions", effective="2026-09-08",
          confirmed_on="2026-09-18", status=None,
@@ -288,6 +297,41 @@ ORDERS = [
          verify=dict(url="https://www.blm.gov/programs/public-safety-and-fire/fire/regional-info/arizona/fire-restrictions",
                      must=[r"Seasonal fire restrictions were lifted on Sept\. 8, 2026"],
                      must_not=[r"Stage (1|2|I|II) fire restrictions (are|remain) in effect"])),
+]
+
+
+# Hand-checked news and agency reports for states with no feed this app can read. Each carries the date it was checked and is
+# dropped automatically after valid_days, so an old report disappears instead of posing as current.
+MANUAL_NOTES = [
+    dict(state="CA", checked_on="2026-09-18", valid_days=7, source="News reports (CAL FIRE's site blocks automated checks)",
+         url="https://burnpermit.fire.ca.gov/current-burn-status",
+         text="CAL FIRE has suspended residential burn permits in several units. Reported: Humboldt-Del Norte (debris burning suspended, "
+              "no end date as of Sept. 1) and Nevada, Yuba, Placer and Sierra counties (since June 15). It differs by unit and changes fast, "
+              "so check your unit's status."),
+    dict(state="CO", checked_on="2026-09-18", valid_days=7, source="County sheriff notices",
+         url="https://csfs.colostate.edu/wildfire-mitigation/current-wildfire-information-fire-restrictions/",
+         text="Colorado has no statewide burn ban; each county, forest and BLM district decides. Summit County went from Stage 2 to Stage 1 "
+              "on Sept. 11. Unincorporated Jefferson County had no restrictions as of Sept. 18."),
+    dict(state="ND", checked_on="2026-09-18", valid_days=7, source="KFYR-TV (Sept. 1) and ND Response",
+         url="https://ndresponse.gov/burn-restrictions-fire-danger-maps",
+         text="North Dakota counties set their own burn restrictions. Ward, Burleigh, Stark and Williams counties and the Turtle Mountain "
+              "Reservation have had bans, and fire danger was rising as of Sept. 1. The state's county map shows the current list."),
+    dict(state="MO", checked_on="2026-09-18", valid_days=7, source="Local news (Sept. 1-8)",
+         url="https://dfs.dps.mo.gov/programs/resources/county-burn-bans.php",
+         text="Missouri has no statewide list; counties order their own bans. Reported in early September: Jasper (through Sept. 30), "
+              "Barton, Polk, McDonald, Cedar and Vernon counties, plus the city of Bolivar. Ask your county commission."),
+    dict(state="KS", checked_on="2026-09-18", valid_days=7, source="KWCH / KSN (Sept. 2-15)",
+         url="https://www.kansasforests.org",
+         text="Kansas counties set their own bans, and several have expired or been renewed. Reported in September: Barton (from Sept. 15), "
+              "Kiowa and Comanche (until further notice), plus Sedgwick County Fire District 1 and its member cities."),
+    dict(state="ID", checked_on="2026-09-18", valid_days=7, source="BLM and Idaho Dept. of Lands releases",
+         url="https://www.idl.idaho.gov/fire-management/fire-restrictions-finder/",
+         text="Idaho restrictions vary by area. Stage 1 covered most of the state in late August with Stage 2 in the north; the Boise area lifted "
+              "Stage 1 on Sept. 3 and BLM's Coeur d'Alene District rescinded its restrictions. Use the state's Fire Restrictions Finder."),
+    dict(state="NC", checked_on="2026-09-18", valid_days=7, source="NC Forest Service / NC Agriculture",
+         url="https://www.ncagr.gov/news/press-releases/2026/05/07/state-issued-burn-ban-lifted-all-north-carolina-counties-fire-danger-moderates-following-recent",
+         text="North Carolina's statewide burn ban was fully lifted on May 8, 2026 and no new state ban was reported in September. "
+              "Counties and cities can still restrict burning."),
 ]
 
 
@@ -313,7 +357,10 @@ def build_orders():
     except Exception:
         usa = {}
     now = int(time.time() * 1000)
+    today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
     for o in ORDERS:
+        if o.get("expires") and today > o["expires"]:
+            continue  # the order has run its course
         verdict, why = check_page(o["verify"])
         ok = verdict in ("confirmed", "unreachable")
         warn = None
@@ -332,7 +379,114 @@ def build_orders():
                              error=None if ok else f"{o['source']}: {why}", active=active, total=1 if o.get("status") else 0,
                              covers=[o["state"]] if ok else [], edited=epoch(o["effective"]),
                              verified=now if verdict == "confirmed" else None, warn=warn, kind="order"))
+    for n in MANUAL_NOTES:
+        age = (datetime.date.fromisoformat(today) - datetime.date.fromisoformat(n["checked_on"])).days
+        if age <= n["valid_days"]:
+            notes.append(dict(state=n["state"], text=n["text"], source=n["source"], url=n["url"], verified=None,
+                              checked_on=n["checked_on"], warn=None, manual=True))
     return feats, coverage, notes
+
+
+# --- County lists scraped from state pages, drawn on nationwide county outlines ------------------------------
+COUNTIES = "https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_Counties_Generalized_Boundaries/FeatureServer/0"
+_county_cache = {}
+
+
+def county_geoms(state_full):
+    hit = _county_cache.get(state_full)
+    if hit and time.time() - hit[0] < 86400:
+        return hit[1]
+    qs = urllib.parse.urlencode({"where": f"STATE_NAME='{state_full}'", "outFields": "NAME", "f": "geojson", "outSR": 4326,
+                                 "maxAllowableOffset": 0.01, "geometryPrecision": 3, "resultRecordCount": 500})
+    gj = http_json(f"{COUNTIES}/query?{qs}")
+    out = {f["properties"]["NAME"]: f["geometry"] for f in gj.get("features", []) if f.get("geometry")}
+    if not out:
+        raise RuntimeError(f"no county outlines for {state_full}")
+    _county_cache[state_full] = (time.time(), out)
+    return out
+
+
+def page_text(url):
+    raw = http_bytes(url).decode("utf-8", "ignore")
+    raw = re.sub(r"<script.*?</script>|<style.*?</style>", " ", raw, flags=re.S)
+    return re.sub(r"\s+", " ", htmlmod.unescape(re.sub(r"<[^>]+>", " ", raw))).replace("​", " ")
+
+
+def central(naive):
+    try:
+        tz = ZoneInfo("America/Chicago")
+    except Exception:
+        tz = datetime.timezone(datetime.timedelta(hours=-5))
+    return int(naive.replace(tzinfo=tz).timestamp() * 1000)
+
+
+def fetch_ar():
+    """Arkansas Dept. of Agriculture lists every county with a judge-issued burn ban, stamped with the time it was compiled."""
+    text = page_text("https://mip.agri.arkansas.gov/agtools/Forestry/Fire_Info/Burn_Bans?show_districts=False")
+    stamp = re.search(r"Burn Bans as of (\d+/\d+/\d+ \d+:\d+ [AP]M)", text)
+    lst = re.search(r"Burn Ban Counties \((\d+)\)\s*(.*?)\s*Privacy Policy", text)
+    if not stamp or not lst:
+        raise RuntimeError("unexpected Arkansas burn ban page format")
+    names = [n.strip() for n in lst.group(2).split(",") if n.strip()]
+    if len(names) != int(lst.group(1)):
+        raise RuntimeError(f"Arkansas list says {lst.group(1)} counties but has {len(names)}")
+    edited = central(datetime.datetime.strptime(stamp.group(1), "%m/%d/%Y %I:%M %p"))
+    if time.time() * 1000 - edited > 2 * 864e5:
+        raise RuntimeError(f"Arkansas list is stale ({stamp.group(1)})")
+    return dict(banned={norm(n): "County judge's burn ban." for n in names}, edited=edited, status="ban", label="Burn ban")
+
+
+def fetch_ga():
+    """Georgia EPD's seasonal yard-debris burning ban: 54 metro counties, May 1 to September 30."""
+    text = page_text("https://epd.georgia.gov/air-protection-branch/open-burning-rules-georgia/summer-open-burning-ban")
+    if not re.search(r"May 1.{0,40}September 30", text):
+        raise RuntimeError("Georgia EPD page no longer describes the May 1 - September 30 ban")
+    names = [n.strip() for chunk in re.findall(r"Counties included:\s*([^.]*)\.", text) for n in chunk.split(",") if n.strip()]
+    if len(names) != 54:
+        raise RuntimeError(f"expected 54 Georgia counties, found {len(names)}")
+    today = datetime.datetime.now(datetime.timezone.utc).date()
+    in_season = datetime.date(today.year, 5, 1) <= today <= datetime.date(today.year, 9, 30)
+    banned = {norm(n): "Yard and land-clearing debris burning is banned (ozone rule). Campfires and cooking fires are still allowed." for n in names} if in_season else {}
+    return dict(banned=banned, edited=epoch(f"{today.year}-05-01"), status="restricted", label="Summer yard-debris burning ban")
+
+
+_WI_STOP = re.compile(r"(burning (permits? )?(is|are) (suspended|prohibited|not allowed)|no burning|not (being )?issu)", re.I)
+
+
+def fetch_wi():
+    """Wisconsin DNR publishes fire danger and burn permit rules for all 72 counties as JSON."""
+    rows = json.loads(http_bytes("https://apps.dnr.wi.gov/forestryapps/burnrestriction/json/").decode("utf-8"))
+    if len(rows) < 60:
+        raise RuntimeError("Wisconsin burn restriction data looks incomplete")
+    stamps = [int(re.search(r"\d+", r["LAST_UPDATE_DATE"]).group()) for r in rows if r.get("LAST_UPDATE_DATE")]
+    banned = {}
+    for r in rows:
+        txt = r.get("PERMIT_RESTRICTIONS") or ""
+        if (r.get("DANGER_RATING_CODE") or 0) >= 4 or _WI_STOP.search(txt):
+            banned[norm(r["COUNTY_NAME"])] = (txt[:240] or f"Fire danger: {r.get('DANGER_RATING_NAME')}")
+    return dict(banned=banned, edited=max(stamps) if stamps else None, status="restricted", label="Burn permits suspended or fire danger very high")
+
+
+def load_county_feed(cf):
+    edited = None
+    try:
+        info = cf["county_fetch"]()
+        edited = info["edited"]
+        geoms = county_geoms(cf["full"])
+        feats, matched = [], set()
+        for name, g in geoms.items():
+            key = norm(name)
+            hit = key in info["banned"]
+            matched.add(key) if hit else None
+            feats.append({"type": "Feature", "geometry": g, "properties": dict(
+                id=f"{cf['state']}-{key}", name=name, state=cf["state"], status=info["status"] if hit else "none",
+                label=info["label"] if hit else "No burn ban", detail=info["banned"].get(key, "") if hit else "", updated=edited,
+                source=cf["source"], home=cf["home"])})
+        missing = set(info["banned"]) - matched
+        warn = f"{len(missing)} listed counties didn't match the map ({', '.join(sorted(missing))[:80]})" if missing else None
+        return cf, feats, None, edited, warn
+    except Exception as e:
+        return cf, [], f"{type(e).__name__}: {e}"[:160], edited, None
 
 
 ARC = "https://services{n}.arcgis.com/{org}/arcgis/rest/services/{svc}/FeatureServer/{layer}"
@@ -368,6 +522,12 @@ FEEDS = [
     # Federal land only: it can show a restriction but can't vouch for a spot being clear.
     dict(state="BLM", simplify=0.02, full="BLM Rocky Mountain Area", source="Bureau of Land Management", home="https://www.blm.gov", parse=parse_blm, covers=[],
          url=ARC.format(n=3, org="T4QMspbfLg3qTGWY", svc="Rocky_Mountain_Area_BLM_Fire_Restriction_Polygons_NEW_VIEW", layer=0)),
+    dict(state="AR", full="Arkansas", source="Arkansas Dept. of Agriculture, Forestry Division", county_fetch=fetch_ar,
+         home="https://mip.agri.arkansas.gov/agtools/Forestry/Fire_Info/Burn_Bans"),
+    dict(state="GA", full="Georgia", source="Georgia Environmental Protection Division", county_fetch=fetch_ga,
+         home="https://epd.georgia.gov/air-protection-branch/open-burning-rules-georgia/summer-open-burning-ban"),
+    dict(state="WI", full="Wisconsin", source="Wisconsin DNR", county_fetch=fetch_wi,
+         home="https://apps.dnr.wi.gov/forestryapps/burnrestriction"),
     # Seasonal restrictions change weekly, so these are only trusted while their layer has been edited recently.
     dict(state="USFS", full="Forest Service, Southwest (AZ/NM)", source="U.S. Forest Service, Southwestern Region", home="https://www.fs.usda.gov/r03",
          parse=parse_r3, covers=[], simplify=0.01, max_age_days=30,
@@ -440,6 +600,8 @@ def layer_edited(url):
 
 
 def load_feed(feed):
+    if feed.get("county_fetch"):
+        return load_county_feed(feed)
     qs = urllib.parse.urlencode({
         "where": feed.get("where", "1=1"), "outFields": "*", "f": "geojson", "outSR": 4326,
         "geometryPrecision": 3, "maxAllowableOffset": 0.01, "resultRecordCount": 1000,

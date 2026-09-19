@@ -217,8 +217,8 @@ async function renderHere() {
     items.push(`<div class="item"><b>No active order on record here</b><span class="meta">${esc(feedFor.source)}</span></div>`);
   }
   for (const n of (S.bans?.notes || []).filter((n) => n.state === code)) {
-    items.push(`<div class="item"><b>${esc(S.states[code]?.name || code)} · what the official sources say</b><span>${esc(n.text)}</span>
-      <span class="meta">${esc(n.source)} · ${n.verified ? "re-checked against the official page just now" : esc(n.warn || "last checked " + n.checked_on)}${n.url ? ` · <a href="${esc(n.url)}" target="_blank" rel="noopener">page</a>` : ""}</span></div>`);
+    items.push(`<div class="item"><b>${esc(S.states[code]?.name || code)} · ${n.manual ? "recent reports (not live data)" : "what the official sources say"}</b><span>${esc(n.text)}</span>
+      <span class="meta">${esc(n.source)} · ${n.verified ? "re-checked against the official page just now" : esc(n.warn || (n.manual ? "checked by hand " : "last checked ") + n.checked_on)}${n.url ? ` · <a href="${esc(n.url)}" target="_blank" rel="noopener">page</a>` : ""}</span></div>`);
   }
   for (const f of alerts) {
     const q = f.properties;
