@@ -139,7 +139,7 @@ function reportPopup(r) {
     ${src ? `<p><a href="${esc(src)}" target="_blank" rel="noopener">Source</a></p>` : ""}
     <button type="button">Remove this report</button>`;
   el.querySelector("button").onclick = async () => {
-    await fetch(`/api/reports/${r.id}`, { method: "DELETE" });
+    await fetch(`api/reports/${r.id}`, { method: "DELETE" });
     map.closePopup();
     await loadReports();
     toast("Report removed");
@@ -425,7 +425,7 @@ $("reportForm").addEventListener("submit", async (e) => {
   const btn = $("r-submit");
   btn.disabled = true;
   try {
-    const res = await fetch("/api/reports", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const res = await fetch("api/reports", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Couldn't save the report.");
     $("reportDlg").close();
@@ -444,9 +444,9 @@ function renderFresh() {
   if (!S.bans) { el.textContent = "Loading live data…"; return; }
   const mins = Math.max(0, Math.round((Date.now() - S.bans.fetched) / 60000));
   const cov = S.bans.coverage, ok = cov.filter((c) => c.ok).length;
-  const old = mins > 15;
+  const old = mins > 30;
   el.className = "fresh" + (old ? " old" : "");
-  $("freshText").textContent = `${mins < 1 ? "Just checked" : `Checked ${mins} min ago`} · ${ok}/${cov.length} sources live · auto-refresh 5 min${old ? " (server is behind)" : ""}`;
+  $("freshText").textContent = `${mins < 1 ? "Just checked" : `Checked ${mins} min ago`} · ${ok}/${cov.length} sources live · auto-refresh 5 min${S.alerts?.unavailable ? " · weather alerts unavailable" : ""}${old ? " (update is running late)" : ""}`;
 }
 
 // Tribal/other layers carry no state: infer it from where they sit.
@@ -463,17 +463,18 @@ function tagStates() {
 
 /* ---------- data loading ---------- */
 async function getJson(url) {
-  const r = await fetch(url);
+  // Relative URLs so it works from a sub-path; the minute-stamp defeats CDN caching without hammering the origin.
+  const r = await fetch(url.startsWith("api/") ? `${url}?_=${Math.floor(Date.now() / 60000)}` : url, { cache: "no-cache" });
   if (!r.ok) throw new Error(`${url}: ${r.status}`);
   return r.json();
 }
 async function loadReports() {
-  try { S.reports = await getJson("/api/reports"); } catch { S.reports = []; }
+  try { S.reports = await getJson("api/reports.json"); } catch { S.reports = []; }
   render();
 }
 let lastLoad = 0;
 async function loadLive() {
-  const [bans, alerts] = await Promise.allSettled([getJson("/api/bans"), getJson("/api/alerts")]);
+  const [bans, alerts] = await Promise.allSettled([getJson("api/bans.json"), getJson("api/alerts.json")]);
   if (bans.status === "fulfilled") { S.bans = bans.value; lastLoad = Date.now(); tagStates(); }
   else toast("Couldn't reach the state burn ban feeds. Showing what's already loaded.");
   if (alerts.status === "fulfilled") S.alerts = alerts.value;
@@ -485,7 +486,7 @@ async function loadLive() {
 
 async function applyConfig() {
   let cfg = { reports: true };
-  try { cfg = await getJson("/api/config"); } catch { /* older server: keep reports on */ }
+  try { cfg = await getJson("api/config.json"); } catch { /* older server: keep reports on */ }
   if (cfg.reports) return;
   S.filters.report = false;
   document.querySelector('[data-f="report"]').closest(".chip").hidden = true;

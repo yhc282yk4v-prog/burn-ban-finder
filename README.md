@@ -12,7 +12,10 @@ No dependencies (Python 3 standard library only). Set `PORT=9000` to change the 
   automatically if they haven't been edited within 30 days; Texas uses the forest service's own daily list.
 - Orders no map carries (New Mexico's statewide order, Arizona BLM status) are re-checked against the agency's page each refresh
   (`ORDERS` in `server.py`). If the page stops saying what was recorded, the order drops off the map instead of being asserted.
-- Nothing updates while the server isn't running. To stay current 24/7 it has to be hosted (set `HOST=0.0.0.0` and `PORT`).
+- **Hosted (free):** `.github/workflows/publish.yml` runs `python server.py --build site` every 5 minutes on GitHub Actions and
+  publishes the result to GitHub Pages as static files (no server, no sleeping). GitHub's scheduler can run a few minutes late; the
+  page shows how old its data is. Community reports are off on the hosted copy.
+- Locally, nothing updates while `python3 server.py` isn't running.
 
 ## Data
 - **State feeds (live, cached 15 min):** TX, OK, LA, FL, TN, IA, NV, WA, OR, MT, UT, WY, MS, plus BLM land

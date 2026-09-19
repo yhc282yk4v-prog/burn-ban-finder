@@ -11,6 +11,8 @@ import html as htmlmod
 import json
 import os
 import re
+import shutil
+import sys
 import threading
 import time
 import urllib.parse
@@ -647,6 +649,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path
+        if path.startswith("/api/") and path.endswith(".json"):
+            path = path[:-5]  # the hosted copy serves these as static files: /api/bans.json
         try:
             if path == "/api/bans":
                 return self.send_json(cached("bans", BANS_TTL, build_bans))
@@ -697,7 +701,29 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_json({"removed": len(items) - len(kept)})
 
 
+def build_site(out):
+    """Write a fully static copy of the site: the page plus the API responses as JSON files.
+    Run on a schedule by GitHub Actions; the previous deploy stays up if this exits non-zero."""
+    shutil.copytree(STATIC, out, dirs_exist_ok=True)
+    api = os.path.join(out, "api")
+    os.makedirs(api, exist_ok=True)
+    bans = build_bans()  # raises if every feed failed
+    try:
+        alerts = build_alerts()
+    except Exception as e:  # NWS being down shouldn't block ban updates; flag it so the page doesn't claim "no alerts"
+        print(f"[build] alerts unavailable: {type(e).__name__}: {e}", flush=True)
+        alerts = {"fetched": int(time.time() * 1000), "type": "FeatureCollection", "features": [], "unavailable": True}
+    for name, data in (("bans", bans), ("alerts", alerts), ("config", {"reports": False}), ("reports", [])):
+        with open(os.path.join(api, f"{name}.json"), "w") as f:
+            json.dump(data, f, separators=(",", ":"))
+    ok = sum(c["ok"] for c in bans["coverage"])
+    print(f"[build] wrote {out}: {ok}/{len(bans['coverage'])} sources ok, {len(bans['features'])} areas, {len(alerts['features'])} alerts", flush=True)
+
+
 if __name__ == "__main__":
+    if len(sys.argv) == 3 and sys.argv[1] == "--build":
+        build_site(sys.argv[2])
+        os._exit(0)
     os.makedirs(os.path.dirname(REPORTS_FILE), exist_ok=True)
     threading.Thread(target=refresher, daemon=True).start()
     srv = ThreadingHTTPServer((HOST, PORT), Handler)

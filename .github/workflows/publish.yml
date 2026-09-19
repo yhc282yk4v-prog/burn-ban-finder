@@ -1,0 +1,49 @@
+name: Update data and publish
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # best effort: GitHub may run this a few minutes late
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # only used by the keep-alive step below
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pull every source and write the static site
+        run: python server.py --build site
+      - name: Keep the schedule alive
+        # GitHub pauses scheduled runs after 60 days without a commit. Add an empty one when the last is over 45 days old.
+        run: |
+          last=$(git log -1 --format=%ct); now=$(date +%s)
+          if [ $((now - last)) -gt $((45 * 86400)) ]; then
+            git -c user.name="github-actions" -c user.email="actions@users.noreply.github.com" commit --allow-empty -m "Keep scheduled updates running"
+            git push
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: burn-ban-finder
-    runtime: docker
-    plan: starter          # always-on, so the 5-minute refresh never sleeps (free tier idles after 15 min)
-    healthCheckPath: /healthz
-    envVars:
-      - key: REPORTS
-        value: "off"
