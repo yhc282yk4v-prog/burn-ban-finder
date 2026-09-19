@@ -220,3 +220,6 @@ legend { font-weight: 500; margin-bottom: 6px; padding: 0; }
 .feeds li.warn { border-color: var(--restr); }
 @media (prefers-reduced-motion: no-preference) { .fresh:not(.old) .pulse { animation: pulse 2.4s ease-out infinite; } }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--clear) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 7px transparent; } }
+
+/* The panel scrolls, so its sections must keep their natural height. Without this, flex squashes the verdict card to ~2px. */
+.panel-scroll > * { flex-shrink: 0; }

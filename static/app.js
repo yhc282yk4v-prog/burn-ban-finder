@@ -500,9 +500,15 @@ async function applyConfig() {
   renderStates();
   renderHere();
   await Promise.all([loadReports(), loadLive()]);
+  // Shareable spot: ?at=lat,lng opens straight to that place's verdict.
+  const at = new URLSearchParams(location.search).get("at");
+  const [atLat, atLng] = (at || "").split(",").map(Number);
+  if (Number.isFinite(atLat) && Number.isFinite(atLng)) {
+    setFocus([atLng, atLat], { fly: true, zoom: 7 });
+    setTimeout(() => $("here").scrollIntoView({ block: "start" }), 1600);
+  } else locate({ quiet: true });
   setInterval(loadLive, 5 * 60 * 1000);
   setInterval(renderFresh, 30 * 1000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - lastLoad > 90 * 1000) loadLive(); });
   $("refresh").onclick = async () => { $("refresh").disabled = true; await loadLive(); $("refresh").disabled = false; };
-  locate({ quiet: true });
 })();
