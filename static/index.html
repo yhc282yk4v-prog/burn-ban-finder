@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Burn Ban Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="panel" id="panel">
+    <div class="panel-scroll">
+      <header class="brand">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="3"/>
+          <path d="M16 7c.9 3.6 5 5.3 5 10.1a5 5 0 0 1-10 0c0-1.8.9-3.2 2-4 0 1.9 1 2.9 2 2.9-.2-3.8-1-5.4 1-9z" fill="currentColor"/>
+          <path d="M6.5 25.5l19-19" stroke="var(--panel)" stroke-width="5"/>
+          <path d="M6.5 25.5l19-19" stroke="currentColor" stroke-width="2.6"/>
+        </svg>
+        <div>
+          <h1>Burn Ban Finder</h1>
+          <p>Open-burning bans and fire restrictions across the USA</p>
+        </div>
+      </header>
+
+      <p class="fresh" id="fresh"><i class="pulse" aria-hidden="true"></i><span id="freshText">Loading live data…</span> <button type="button" id="refresh" class="linkish">Refresh now</button></p>
+
+      <form class="search" id="search" role="search">
+        <label class="sr" for="q">Search a place</label>
+        <input id="q" type="search" placeholder="City, ZIP or county" autocomplete="off">
+        <button type="submit">Go</button>
+      </form>
+      <button class="locate" id="locate" type="button">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.2" fill="currentColor"/><circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 0v4M10 16v4M0 10h4M16 10h4" stroke="currentColor" stroke-width="1.6"/></svg>
+        Use my location
+      </button>
+
+      <section class="here" id="here" aria-live="polite"></section>
+
+      <section class="block">
+        <h2>Map layers</h2>
+        <div class="chips" id="filters" role="group" aria-label="Map layers">
+          <label class="chip"><input type="checkbox" data-f="ban" checked><i style="--c:var(--ban)"></i>Burn bans</label>
+          <label class="chip"><input type="checkbox" data-f="restricted" checked><i style="--c:var(--restr)"></i>Restrictions</label>
+          <label class="chip"><input type="checkbox" data-f="alert" checked><i style="--c:var(--alert)"></i>Fire weather alerts</label>
+          <label class="chip"><input type="checkbox" data-f="report" checked><i style="--c:var(--report)"></i>Community reports</label>
+          <label class="chip"><input type="checkbox" data-f="nodata" checked><i class="hatch" style="--c:var(--unknown)"></i>States with no live data</label>
+          <label class="chip"><input type="checkbox" data-f="none"><i style="--c:var(--clear)"></i>Counties with no ban</label>
+        </div>
+      </section>
+
+      <section class="block">
+        <h2 id="listTitle">In effect now</h2>
+        <ol class="list" id="list"></ol>
+      </section>
+
+      <section class="block">
+        <h2>Live data sources</h2>
+        <ul class="feeds" id="feeds"></ul>
+        <p class="fine" id="feedNote"></p>
+      </section>
+
+      <section class="block">
+        <details class="dir">
+          <summary>Official source for every state</summary>
+          <ul class="dirlist" id="dir"></ul>
+        </details>
+      </section>
+    </div>
+    <footer class="panel-foot">
+      <button class="primary" id="report" type="button">Report a ban or restriction</button>
+    </footer>
+  </aside>
+
+  <main class="stage">
+    <div id="map" aria-label="Map of burn bans"></div>
+    <div class="legend" id="legend">
+      <span><i style="--c:var(--ban)"></i>Burn ban</span>
+      <span><i style="--c:var(--restr)"></i>Restriction</span>
+      <span><i class="dash" style="--c:var(--alert)"></i>Fire weather alert</span>
+      <span><i class="hatch" style="--c:var(--unknown)"></i>No live data</span>
+    </div>
+    <div class="pickbar" id="pickbar" hidden>
+      <span>Click the map where the ban applies</span>
+      <button type="button" id="pickHere">Use my location</button>
+      <button type="button" id="pickCancel" class="ghost">Cancel</button>
+    </div>
+    <div class="toast" id="toast" role="status" hidden></div>
+  </main>
+</div>
+
+<dialog id="reportDlg">
+  <form id="reportForm" method="dialog">
+    <h2>Report a ban or restriction</h2>
+    <p class="fine">Shared only on this device's copy of the app. Link the official notice when you can.</p>
+    <div class="row">
+      <div class="field">
+        <label for="r-area">County or town</label>
+        <input id="r-area" required maxlength="120" placeholder="e.g. Harris County">
+      </div>
+      <div class="field small">
+        <label for="r-state">State</label>
+        <select id="r-state" required></select>
+      </div>
+    </div>
+    <fieldset>
+      <legend>Status</legend>
+      <label class="radio"><input type="radio" name="r-status" value="ban" checked><span>Burn ban</span></label>
+      <label class="radio"><input type="radio" name="r-status" value="restricted"><span>Restrictions</span></label>
+      <label class="radio"><input type="radio" name="r-status" value="lifted"><span>Ban lifted</span></label>
+    </fieldset>
+    <div class="field">
+      <label for="r-note">Details <span class="opt">optional</span></label>
+      <textarea id="r-note" rows="2" maxlength="500" placeholder="What's banned, who ordered it, until when"></textarea>
+    </div>
+    <div class="field">
+      <label for="r-url">Source link <span class="opt">optional</span></label>
+      <input id="r-url" type="url" maxlength="300" placeholder="https://">
+    </div>
+    <p class="fine" id="r-loc"></p>
+    <p class="error" id="r-err" hidden></p>
+    <div class="actions">
+      <button type="button" class="ghost" id="r-cancel">Cancel</button>
+      <button type="submit" class="primary" id="r-submit">Save report</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="vendor/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

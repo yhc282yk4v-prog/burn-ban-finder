@@ -1,0 +1,257 @@
+{
+ "AL": {
+  "name": "Alabama",
+  "agency": "Alabama Forestry Commission",
+  "url": "https://www.forestry.alabama.gov"
+ },
+ "AK": {
+  "name": "Alaska",
+  "agency": "Alaska Division of Forestry & Fire Protection",
+  "url": "https://forestry.alaska.gov"
+ },
+ "AZ": {
+  "name": "Arizona",
+  "agency": "Arizona Dept. of Forestry and Fire Management",
+  "url": "https://dffm.az.gov"
+ },
+ "AR": {
+  "name": "Arkansas",
+  "agency": "Arkansas Division of Forestry",
+  "url": "https://agriculture.arkansas.gov/forestry/"
+ },
+ "CA": {
+  "name": "California",
+  "agency": "CAL FIRE",
+  "url": "https://www.fire.ca.gov"
+ },
+ "CO": {
+  "name": "Colorado",
+  "agency": "Colorado Division of Fire Prevention & Control",
+  "url": "https://dfpc.colorado.gov"
+ },
+ "CT": {
+  "name": "Connecticut",
+  "agency": "Connecticut DEEP",
+  "url": "https://portal.ct.gov/deep"
+ },
+ "DE": {
+  "name": "Delaware",
+  "agency": "Delaware Forest Service",
+  "url": "https://agriculture.delaware.gov/forest-service/"
+ },
+ "DC": {
+  "name": "District of Columbia",
+  "agency": "DC Fire & EMS",
+  "url": "https://fems.dc.gov"
+ },
+ "FL": {
+  "name": "Florida",
+  "agency": "Florida Forest Service",
+  "url": "https://www.fdacs.gov/Divisions-Offices/Florida-Forest-Service"
+ },
+ "GA": {
+  "name": "Georgia",
+  "agency": "Georgia Forestry Commission",
+  "url": "https://gatrees.org"
+ },
+ "HI": {
+  "name": "Hawaii",
+  "agency": "Hawaii Division of Forestry & Wildlife",
+  "url": "https://dlnr.hawaii.gov/forestry/"
+ },
+ "ID": {
+  "name": "Idaho",
+  "agency": "Idaho Fire Information",
+  "url": "https://www.idahofireinfo.com"
+ },
+ "IL": {
+  "name": "Illinois",
+  "agency": "Illinois DNR",
+  "url": "https://dnr.illinois.gov"
+ },
+ "IN": {
+  "name": "Indiana",
+  "agency": "Indiana DNR Forestry",
+  "url": "https://www.in.gov/dnr/forestry/"
+ },
+ "IA": {
+  "name": "Iowa",
+  "agency": "Iowa DNR",
+  "url": "https://www.iowadnr.gov"
+ },
+ "KS": {
+  "name": "Kansas",
+  "agency": "Kansas Forest Service",
+  "url": "https://www.kansasforests.org"
+ },
+ "KY": {
+  "name": "Kentucky",
+  "agency": "Kentucky Division of Forestry",
+  "url": "https://eec.ky.gov/Natural-Resources/Forestry/Pages/default.aspx"
+ },
+ "LA": {
+  "name": "Louisiana",
+  "agency": "Louisiana Dept. of Agriculture & Forestry",
+  "url": "https://www.ldaf.la.gov"
+ },
+ "ME": {
+  "name": "Maine",
+  "agency": "Maine Forest Service",
+  "url": "https://www.maine.gov/dacf/mfs/"
+ },
+ "MD": {
+  "name": "Maryland",
+  "agency": "Maryland DNR Forest Service",
+  "url": "https://dnr.maryland.gov/forests/"
+ },
+ "MA": {
+  "name": "Massachusetts",
+  "agency": "Massachusetts DCR",
+  "url": "https://www.mass.gov/orgs/department-of-conservation-and-recreation"
+ },
+ "MI": {
+  "name": "Michigan",
+  "agency": "Michigan DNR",
+  "url": "https://www.michigan.gov/dnr"
+ },
+ "MN": {
+  "name": "Minnesota",
+  "agency": "Minnesota DNR",
+  "url": "https://www.dnr.state.mn.us/forestry/fire/"
+ },
+ "MS": {
+  "name": "Mississippi",
+  "agency": "Mississippi Forestry Commission",
+  "url": "https://www.mfc.ms.gov"
+ },
+ "MO": {
+  "name": "Missouri",
+  "agency": "Missouri Dept. of Conservation",
+  "url": "https://mdc.mo.gov"
+ },
+ "MT": {
+  "name": "Montana",
+  "agency": "Montana DNRC",
+  "url": "https://dnrc.mt.gov"
+ },
+ "NE": {
+  "name": "Nebraska",
+  "agency": "Nebraska Forest Service",
+  "url": "https://nfs.unl.edu"
+ },
+ "NV": {
+  "name": "Nevada",
+  "agency": "Nevada Fire Info",
+  "url": "https://www.nevadafireinfo.org"
+ },
+ "NH": {
+  "name": "New Hampshire",
+  "agency": "NH Division of Forests & Lands",
+  "url": "https://www.nh.gov/nhdfl"
+ },
+ "NJ": {
+  "name": "New Jersey",
+  "agency": "New Jersey Forest Fire Service",
+  "url": "https://dep.nj.gov/njfs/"
+ },
+ "NM": {
+  "name": "New Mexico",
+  "agency": "NM State Forestry",
+  "url": "https://www.emnrd.nm.gov/sfd/"
+ },
+ "NY": {
+  "name": "New York",
+  "agency": "NY DEC",
+  "url": "https://dec.ny.gov"
+ },
+ "NC": {
+  "name": "North Carolina",
+  "agency": "NC Forest Service",
+  "url": "https://www.ncforestservice.gov"
+ },
+ "ND": {
+  "name": "North Dakota",
+  "agency": "ND Forest Service",
+  "url": "https://www.ndsu.edu/ndfs"
+ },
+ "OH": {
+  "name": "Ohio",
+  "agency": "Ohio DNR",
+  "url": "https://ohiodnr.gov"
+ },
+ "OK": {
+  "name": "Oklahoma",
+  "agency": "Oklahoma Forestry Services",
+  "url": "https://forestry.ok.gov"
+ },
+ "OR": {
+  "name": "Oregon",
+  "agency": "Oregon Dept. of Forestry",
+  "url": "https://www.oregon.gov/odf/fire/"
+ },
+ "PA": {
+  "name": "Pennsylvania",
+  "agency": "PA DCNR",
+  "url": "https://www.pa.gov/agencies/dcnr"
+ },
+ "RI": {
+  "name": "Rhode Island",
+  "agency": "RI DEM",
+  "url": "https://dem.ri.gov"
+ },
+ "SC": {
+  "name": "South Carolina",
+  "agency": "SC Forestry Commission",
+  "url": "https://www.scfc.gov"
+ },
+ "SD": {
+  "name": "South Dakota",
+  "agency": "SD Wildland Fire",
+  "url": "https://sdda.sd.gov/conservation-forestry/wildland-fire/"
+ },
+ "TN": {
+  "name": "Tennessee",
+  "agency": "Tennessee Division of Forestry",
+  "url": "https://www.tn.gov/agriculture/forests"
+ },
+ "TX": {
+  "name": "Texas",
+  "agency": "Texas A&M Forest Service",
+  "url": "https://tfsweb.tamu.edu"
+ },
+ "UT": {
+  "name": "Utah",
+  "agency": "Utah Forestry, Fire & State Lands",
+  "url": "https://ffsl.utah.gov"
+ },
+ "VT": {
+  "name": "Vermont",
+  "agency": "Vermont Forests, Parks & Recreation",
+  "url": "https://fpr.vermont.gov"
+ },
+ "VA": {
+  "name": "Virginia",
+  "agency": "Virginia Dept. of Forestry",
+  "url": "https://dof.virginia.gov"
+ },
+ "WA": {
+  "name": "Washington",
+  "agency": "Washington DNR",
+  "url": "https://www.dnr.wa.gov"
+ },
+ "WV": {
+  "name": "West Virginia",
+  "agency": "WV Division of Forestry",
+  "url": "https://wvforestry.com"
+ },
+ "WI": {
+  "name": "Wisconsin",
+  "agency": "Wisconsin DNR",
+  "url": "https://dnr.wisconsin.gov/topic/forestfire"
+ },
+ "WY": {
+  "name": "Wyoming",
+  "agency": "Wyoming State Forestry Division",
+  "url": "https://sfd.wyo.gov"
+ }
+}
