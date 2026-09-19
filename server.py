@@ -12,6 +12,7 @@ import json
 import os
 import re
 import shutil
+import ssl
 import sys
 import threading
 import time
@@ -37,16 +38,30 @@ REPORTS_ON = os.environ.get("REPORTS", "on") != "off"  # hosted deployments turn
 pool = ThreadPoolExecutor(max_workers=12)
 
 
-def http_json(url, timeout=25):
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/geo+json, application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.load(r)
+# Some state servers send only their own certificate and rely on browsers to fetch the missing intermediate.
+# Ship those public intermediates so verification stays on instead of being switched off.
+_ssl_ctx = ssl.create_default_context()
+for _pem in sorted(os.listdir(os.path.join(ROOT, "certs"))) if os.path.isdir(os.path.join(ROOT, "certs")) else []:
+    _ssl_ctx.load_verify_locations(cafile=os.path.join(ROOT, "certs", _pem))
 
 
-def http_bytes(url, timeout=25):
-    req = urllib.request.Request(url, headers={"User-Agent": BROWSER_UA})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return r.read()
+def _open(req, timeout, tries=3):
+    for attempt in range(tries):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx) as r:
+                return r.read()
+        except Exception:
+            if attempt == tries - 1:
+                raise
+            time.sleep(1.5 * (attempt + 1))
+
+
+def http_json(url, timeout=30):
+    return json.loads(_open(urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/geo+json, application/json"}), timeout))
+
+
+def http_bytes(url, timeout=30):
+    return _open(urllib.request.Request(url, headers={"User-Agent": BROWSER_UA}), timeout)
 
 
 def norm(name):  # "Deaf Smith County" / "DEAF SMITH" / "Saint Francis" / "St. Francis County" all compare equal
